@@ -1,2 +1,2 @@
 # Nekohime-ai
-A WhatsApp bot for yentown weeks with yandere/tsundere attotude
+A WhatsApp bot for yentown weebs with yandere/tsundere attitude
