@@ -1,0 +1,15 @@
+{
+  "name": "nekohime-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp AI bot using Baileys and Hugging Face",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.5.0",
+    "node-fetch": "^3.3.2",
+    "pino": "^8.0.0"
+  }
+}
