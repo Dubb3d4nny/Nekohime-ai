@@ -1,15 +1,14 @@
 {
   "name": "nekohime-bot",
   "version": "1.0.0",
-  "type": "module",
+  "description": "WhatsApp bot using Baileys",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "@adiwajshing/baileys": "^6.6.0",
-    "axios": "^1.6.8",
-    "express": "^4.19.2",
-    "node-fetch": "^3.3.2"
+    "@adiwajshing/baileys": "^6.7.0",
+    "@hapi/boom": "^10.0.1",
+    "pino": "^8.15.0"
   }
 }
