@@ -1,14 +1,22 @@
 {
-  "name": "nekohime-bot",
+  "name": "nekohime-ai",
   "version": "1.0.0",
-  "description": "WhatsApp bot using Baileys and Jikan API for anime info. Nekohime serves the Yentown Weebs!",
+  "description": "A WhatsApp bot named Nekohime using Baileys and Hugging Face API",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node index.js"
   },
+  "keywords": [
+    "whatsapp-bot",
+    "baileys",
+    "nekohime",
+    "huggingface"
+  ],
+  "author": "Dubb3d4nny",
+  "license": "MIT",
   "dependencies": {
-    "@adiwajshing/baileys": "6.2.1",
+    "@adiwajshing/baileys": "^5.0.0",
     "@hapi/boom": "^10.0.1",
     "dotenv": "^16.4.5",
     "node-fetch": "^3.3.2",
