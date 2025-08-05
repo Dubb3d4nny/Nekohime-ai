@@ -1,7 +1,7 @@
 {
   "name": "nekohime-bot",
   "version": "1.0.0",
-  "description": "WhatsApp bot using Baileys and Jikan API for anime info. Nekohime serves the Yentown Weebs!",
+  "description": "Minimal WhatsApp bot using Baileys for tagging and anime info.",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -9,9 +9,6 @@
   },
   "dependencies": {
     "@adiwajshing/baileys": "^6.7.0",
-    "@hapi/boom": "^10.0.1",
-    "dotenv": "^16.4.5",
-    "node-fetch": "^3.3.2",
-    "pino": "^8.15.0"
+    "node-fetch": "^3.3.2"
   }
 }
