@@ -46,3 +46,32 @@ async function start() {
       const title = textMsg.slice(7).trim();
       if (!title) {
         await sock.sendMessage(jid
+
+
+// Handle !tagall
+        if (body === '!tagall' && isGroup) {
+            const groupMetadata = await sock.groupMetadata(from);
+            const isAdmin = groupMetadata.participants.find(p => p.id === sender && p.admin);
+            if (!isAdmin) {
+                return sock.sendMessage(from, { text: '⚠️ Only admins can use this command.' }, { quoted: message });
+            }
+            return await tagAllMembers(sock, message, groupMetadata);
+        }
+
+        // Handle !anime
+        if (body.startsWith('!anime')) {
+            const query = body.split(' ').slice(1).join(' ');
+            const reply = await fetchAnime(query || 'One Piece');
+            return sock.sendMessage(from, { text: reply }, { quoted: message });
+        }
+
+        // AI personality mode (e.g., regular conversation)
+        if (!body.startsWith('!')) {
+            const mood = personality.mood;
+            const reply = `${mood.prefix} ${body}? That's interesting!`;
+            return sock.sendMessage(from, { text: reply }, { quoted: message });
+        }
+    });
+}
+
+startNekoHime();
