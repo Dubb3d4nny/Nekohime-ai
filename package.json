@@ -8,7 +8,7 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "@adiwajshing/baileys": "^6.5.0",
+    "@adiwajshing/baileys": "6.2.1",
     "@hapi/boom": "^10.0.1",
     "dotenv": "^16.4.5",
     "node-fetch": "^3.3.2",
