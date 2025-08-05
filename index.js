@@ -45,24 +45,4 @@ async function start() {
     if (textMsg.toLowerCase().startsWith("!anime ")) {
       const title = textMsg.slice(7).trim();
       if (!title) {
-        await sock.sendMessage(jid, { text: "❗ Please provide an anime title. Try: `!anime bleach`" });
-        return;
-      }
-
-      await sock.sendPresenceUpdate('composing', jid);
-      await new Promise(res => setTimeout(res, 1000));
-      const info = await getAnimeInfo(title);
-      await sock.sendMessage(jid, { text: info });
-      return;
-    }
-
-    // 💬 General AI replies
-    await sock.sendPresenceUpdate('composing', jid);
-    const reply = await askHuggingFace(textMsg);
-    await sock.sendMessage(jid, { text: reply });
-  });
-
-  console.log("🚀 NekoHime is running...");
-}
-
-start().catch(err => console.error("❌ Failed to start NekoHime:", err));
+        await sock.sendMessage(jid
