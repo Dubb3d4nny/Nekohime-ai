@@ -34,44 +34,46 @@ async function start() {
 
   sock.ev.on("messages.upsert", async ({ messages }) => {
     const msg = messages[0];
-    if (!msg.message) return;
+    if (!msg.message || msg.key.fromMe) return;
 
     const jid = msg.key.remoteJid;
     const textMsg = msg.message.conversation || msg.message.extendedTextMessage?.text;
-
     if (!textMsg) return;
 
-    // 🎌 Anime command
-    if (textMsg.toLowerCase().startsWith("!anime ")) {
-      const title = textMsg.slice(7).trim();
+    const body = textMsg.trim();
+
+    // Handle !anime command
+    if (body.toLowerCase().startsWith('!anime ')) {
+      const title = body.slice(7).trim();
       if (!title) {
-        await sock.sendMessage(jid
+        await sock.sendMessage(jid, { text: "❌ Please provide an anime title, senpai!" }, { quoted: msg });
+        return;
+      }
+      const reply = await getAnimeInfo(title);
+      await sock.sendMessage(jid, { text: reply }, { quoted: msg });
+      return;
+    }
 
+    // Handle !watch command (optional)
+    if (body.toLowerCase().startsWith('!watch ')) {
+      const title = body.slice(7).trim();
+      if (!title) {
+        await sock.sendMessage(jid, { text: "❌ Please provide an anime title to watch, senpai!" }, { quoted: msg });
+        return;
+      }
+      // You can implement getWatchLinks(title) or reuse getAnimeInfo with flag
+      // For now just reuse getAnimeInfo or add your own watch function
+      const reply = await getAnimeInfo(title); // or a special watch function if you add it
+      await sock.sendMessage(jid, { text: reply }, { quoted: msg });
+      return;
+    }
 
-// Handle !tagall
-        if (body === '!tagall' && isGroup) {
-            const groupMetadata = await sock.groupMetadata(from);
-            const isAdmin = groupMetadata.participants.find(p => p.id === sender && p.admin);
-            if (!isAdmin) {
-                return sock.sendMessage(from, { text: '⚠️ Only admins can use this command.' }, { quoted: message });
-            }
-            return await tagAllMembers(sock, message, groupMetadata);
-        }
-
-        // Handle !anime
-        if (body.startsWith('!anime')) {
-            const query = body.split(' ').slice(1).join(' ');
-            const reply = await fetchAnime(query || 'One Piece');
-            return sock.sendMessage(from, { text: reply }, { quoted: message });
-        }
-
-        // AI personality mode (e.g., regular conversation)
-        if (!body.startsWith('!')) {
-            const mood = personality.mood;
-            const reply = `${mood.prefix} ${body}? That's interesting!`;
-            return sock.sendMessage(from, { text: reply }, { quoted: message });
-        }
-    });
+    // Example: AI Personality response (fallback for normal chat)
+    if (!body.startsWith('!')) {
+      const reply = await askHuggingFace(body);
+      await sock.sendMessage(jid, { text: `🧠 NekoHime: ${reply}` }, { quoted: msg });
+    }
+  });
 }
 
-startNekoHime();
+start();
