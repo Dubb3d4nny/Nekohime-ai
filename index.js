@@ -1,65 +1,35 @@
-import baileys from '@adiwajshing/baileys';
-import Pino from 'pino';
-import { Boom } from '@hapi/boom';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import * as fs from 'fs';
-import * as path from 'path';
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@adiwajshing/baileys');
+const { Boom } = require('@hapi/boom');
+const fs = require('fs');
 
-// Baileys Setup
-const {
-  default: makeWASocket,
-  useMultiFileAuthState,
-  DisconnectReason,
-  fetchLatestBaileysVersion
-} = baileys;
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const startSock = async () => {
-  const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'auth_info'));
-
-  const { version, isLatest } = await fetchLatestBaileysVersion();
+async function startBot() {
+  const { state, saveCreds } = await useMultiFileAuthState('auth');
 
   const sock = makeWASocket({
-    version,
     auth: state,
-    printQRInTerminal: true,
-    logger: Pino({ level: 'silent' }),
+    printQRInTerminal: true, // shows QR code directly
   });
-
-  sock.ev.on('creds.update', saveCreds);
 
   sock.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect } = update;
+
     if (connection === 'close') {
-      const shouldReconnect = (lastDisconnect.error = Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-      console.log('Connection closed due to', lastDisconnect.error, ', reconnecting:', shouldReconnect);
+      const shouldReconnect =
+        lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+
+      console.log('❌ Connection closed. Reconnecting:', shouldReconnect);
+
       if (shouldReconnect) {
-        startSock();
+        startBot(); // try again
+      } else {
+        console.log('🔒 You are logged out. Delete the auth folder and try again.');
       }
     } else if (connection === 'open') {
-      console.log('✅ Connected to WhatsApp!');
+      console.log('✅ Bot is connected to WhatsApp!');
     }
   });
 
-  sock.ev.on('messages.upsert', async ({ messages, type }) => {
-    const msg = messages[0];
-    if (!msg.message || msg.key.fromMe) return;
+  sock.ev.on('creds.update', saveCreds);
+}
 
-    const text = msg.message.conversation || msg.message.extendedTextMessage?.text;
-
-    if (text?.toLowerCase() === 'hi' || text?.toLowerCase() === 'hello') {
-      await sock.sendMessage(msg.key.remoteJid, { text: 'Hello! Nekohime is online 💬' });
-    }
-
-    if (text?.toLowerCase() === 'ping') {
-      await sock.sendMessage(msg.key.remoteJid, { text: 'Pong! 🏓' });
-    }
-
-    // Add more commands here
-  });
-};
-
-startSock();
+startBot();
