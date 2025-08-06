@@ -1,46 +1,59 @@
-// index.js
+import makeWASocket, {
+  useMultiFileAuthState,
+  fetchLatestBaileysVersion,
+  DisconnectReason
+} from "@adiwajshing/baileys";
 
-import { default as makeWASocket, useMultiFileAuthState, DisconnectReason } from '@adiwajshing/baileys';
-import pino from 'pino';
-import { Boom } from '@hapi/boom';
-import tagAllMembers from './commands/tagall.js';
-import fs from 'fs';
+import { Boom } from "@hapi/boom";
+import config from './config.js'; // 👈 This uses your config.js
+import fs from "fs";
+import P from "pino";
 
 const startSock = async () => {
-    const { state, saveCreds } = await useMultiFileAuthState('auth_info');
-    const sock = makeWASocket({
-        logger: pino({ level: 'silent' }),
-        printQRInTerminal: true,
-        auth: state
-    });
+  const { state, saveCreds } = await useMultiFileAuthState("auth");
+  const { version, isLatest } = await fetchLatestBaileysVersion();
 
-    sock.ev.on('messages.upsert', async ({ messages }) => {
-        const msg = messages[0];
-        if (!msg.message || msg.key.fromMe) return;
+  const sock = makeWASocket({
+    version,
+    logger: P({ level: "silent" }),
+    printQRInTerminal: true,
+    auth: state,
+  });
 
-        const messageType = Object.keys(msg.message)[0];
-        const body = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
-        const sender = msg.key.remoteJid;
+  console.log(`🤖 ${config.BOT_NAME} is online!`);
 
-        // Handle !tagall command in group
-        if (body.toLowerCase().startsWith('!tagall') && msg.key.participant) {
-            const groupMetadata = await sock.groupMetadata(sender);
-            await tagAllMembers(sock, msg, groupMetadata);
-        }
-    });
+  sock.ev.on("messages.upsert", async ({ messages }) => {
+    const m = messages[0];
+    if (!m.message || m.key.fromMe) return;
 
-    sock.ev.on('creds.update', saveCreds);
+    const from = m.key.remoteJid;
+    const msg = m.message.conversation || m.message.extendedTextMessage?.text;
 
-    sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect } = update;
-        if (connection === 'close') {
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log('Connection closed. Reconnecting...', shouldReconnect);
-            if (shouldReconnect) startSock();
-        } else if (connection === 'open') {
-            console.log('✅ Nekohime is online.');
-        }
-    });
+    // Greeting logic from config.js
+    if (msg in config.COMMAND_GREETINGS) {
+      const reply = config.COMMAND_GREETINGS[msg];
+      await sock.sendMessage(from, { text: reply }, { quoted: m });
+    }
+
+    // Example command: ping
+    if (msg === "!ping") {
+      await sock.sendMessage(from, { text: "Pong!" }, { quoted: m });
+    }
+  });
+
+  sock.ev.on("connection.update", async (update) => {
+    const { connection, lastDisconnect } = update;
+
+    if (connection === "close") {
+      const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+      console.log("Connection closed. Reconnecting:", shouldReconnect);
+      if (shouldReconnect) startSock();
+    } else if (connection === "open") {
+      console.log("Connected successfully.");
+    }
+  });
+
+  sock.ev.on("creds.update", saveCreds);
 };
 
 startSock();
