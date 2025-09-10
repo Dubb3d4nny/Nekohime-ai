@@ -1,11 +1,13 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@adiwajshing/baileys');
-const { Boom } = require('@hapi/boom');
-const fs = require('fs');
+// index.js
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@adiwajshing/baileys");
+const { Boom } = require("@hapi/boom");
+const fs = require("fs");
+const { fetchAnimeAndSimilarByName } = require("./anime.js"); // <-- anime helper
 
 // ================== CONFIG ==================
-const BOT_NAME = "Nekohime"
-const WELCOME_LINK_WHATSAPP = "https://whatsapp.com/channel/XXXXXXXX"  // <- replace
-const WELCOME_LINK_TELEGRAM = "https://t.me/XXXXXXXX"                  // <- replace
+const BOT_NAME = "Nekohime";
+const WELCOME_LINK_WHATSAPP = "https://whatsapp.com/channel/XXXXXXXX"; // <- replace
+const WELCOME_LINK_TELEGRAM = "https://t.me/XXXXXXXX";                 // <- replace
 // ============================================
 
 // Build welcome message template
@@ -38,11 +40,11 @@ ${WELCOME_LINK_WHATSAPP}
 ${WELCOME_LINK_TELEGRAM}
 
 Arigato🙏 アニメの世界`
-  )
+  );
 }
 
 async function startBot() {
-  const { state, saveCreds } = await useMultiFileAuthState('auth');
+  const { state, saveCreds } = await useMultiFileAuthState("auth");
 
   const sock = makeWASocket({
     auth: state,
@@ -50,30 +52,30 @@ async function startBot() {
   });
 
   // ================== CONNECTION HANDLER ==================
-  sock.ev.on('connection.update', (update) => {
+  sock.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect } = update;
 
-    if (connection === 'close') {
+    if (connection === "close") {
       const shouldReconnect =
         lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
 
-      console.log('❌ Connection closed. Reconnecting:', shouldReconnect);
+      console.log("❌ Connection closed. Reconnecting:", shouldReconnect);
 
       if (shouldReconnect) {
         startBot(); // try again
       } else {
-        console.log('🔒 You are logged out. Delete the auth folder and try again.');
+        console.log("🔒 You are logged out. Delete the auth folder and try again.");
       }
-    } else if (connection === 'open') {
+    } else if (connection === "open") {
       console.log(`✅ ${BOT_NAME} is connected to WhatsApp!`);
     }
   });
 
   // Save creds on change
-  sock.ev.on('creds.update', saveCreds);
+  sock.ev.on("creds.update", saveCreds);
 
-  // ================== MESSAGE HANDLER (example) ==================
-  sock.ev.on('messages.upsert', async (m) => {
+  // ================== MESSAGE HANDLER ==================
+  sock.ev.on("messages.upsert", async (m) => {
     try {
       const msg = m.messages[0];
       if (!msg.message) return;
@@ -84,8 +86,48 @@ async function startBot() {
         msg.message.extendedTextMessage?.text ||
         "";
 
+      // === Basic Ping ===
       if (text.toLowerCase() === "!ping") {
         await sock.sendMessage(jid, { text: "Pong 🏓" }, { quoted: msg });
+      }
+
+      // === Anime Command ===
+      if (text.startsWith("!anime")) {
+        const animeName = text.replace("!anime", "").trim();
+        if (!animeName) {
+          await sock.sendMessage(jid, { text: "❌ Please provide an anime name." });
+        } else {
+          const reply = await fetchAnimeAndSimilarByName(animeName);
+
+          if (reply.image) {
+            await sock.sendMessage(jid, reply); // cover + caption
+          } else {
+            await sock.sendMessage(jid, { text: reply.text });
+          }
+        }
+      }
+
+      // === Recommendations Only ===
+      if (text.startsWith("!rec")) {
+        const animeName = text.replace("!rec", "").trim();
+        if (!animeName) {
+          await sock.sendMessage(jid, { text: "❌ Please provide an anime name." });
+        } else {
+          const reply = await fetchAnimeAndSimilarByName(animeName);
+
+          if (reply.caption) {
+            const recSection = reply.caption.split("📌 *Similar Recommendations*:")[1]?.trim();
+            if (recSection) {
+              await sock.sendMessage(jid, {
+                text: `📌 *Similar Recommendations for ${animeName}*:\n\n${recSection}`,
+              });
+            } else {
+              await sock.sendMessage(jid, { text: `❌ No recommendations found for "${animeName}".` });
+            }
+          } else {
+            await sock.sendMessage(jid, { text: reply.text });
+          }
+        }
       }
     } catch (err) {
       console.error("Message handler error:", err);
@@ -108,7 +150,7 @@ async function startBot() {
 
         await sock.sendMessage(groupJid, {
           text,
-          mentions: [jid], // actually tags the new member
+          mentions: [jid],
         });
       }
     } catch (err) {
