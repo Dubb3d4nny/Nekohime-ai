@@ -13,4 +13,4 @@ const tagAllMembers = async (sock, message, groupMetadata) => {
   });
 };
 
-export default tagAllMembers;
+module.exports = tagAllMembers;
