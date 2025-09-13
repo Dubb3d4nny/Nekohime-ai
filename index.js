@@ -1,8 +1,8 @@
-// index.js
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@adiwajshing/baileys");
 const { Boom } = require("@hapi/boom");
 const fs = require("fs");
-const { fetchAnimeAndSimilarByName } = require("./anime.js"); // <-- anime helper
+const { fetchAnimeAndSimilarByName } = require("./anime.js"); 
+const tagAllMembers = require("./tagall.js");
 
 // ================== CONFIG ==================
 const BOT_NAME = "Nekohime";
@@ -127,6 +127,16 @@ async function startBot() {
           } else {
             await sock.sendMessage(jid, { text: reply.text });
           }
+        }
+      }
+
+      // === TagAll Command ===
+      if (text.toLowerCase() === "!tagall") {
+        const groupMetadata = await sock.groupMetadata(jid).catch(() => null);
+        if (groupMetadata) {
+          await tagAllMembers(sock, msg, groupMetadata);
+        } else {
+          await sock.sendMessage(jid, { text: "❌ This command only works in groups." });
         }
       }
     } catch (err) {
