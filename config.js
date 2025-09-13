@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   BOT_NAME: "NekoHime",
 
   // Group Info
