@@ -1,6 +1,7 @@
-// anime.js
+const fetch = require("node-fetch");
+
 // Fetch anime info + recommendations + streaming links for Nekohime
-export async function fetchAnimeAndSimilarByName(animeName) {
+async function fetchAnimeAndSimilarByName(animeName) {
   try {
     // 1. Search anime by name
     const searchRes = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(animeName)}&limit=1`);
@@ -75,3 +76,5 @@ function generateExtraLinks(title) {
     animepahe: `https://animepahe.ru/?q=${encodeURIComponent(title)}`
   };
 }
+
+module.exports = { fetchAnimeAndSimilarByName };
